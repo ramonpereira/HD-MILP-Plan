@@ -1,6 +1,6 @@
 # HD-MILP-Plan
 
-Hybrid Deep MILP Planner (HD-MILP-Plan) is a two-stage planner based on the learning and planning framework [1] that (i) learns the state transition function T(s<sub>t</sub>,a<sub>t</sub>) = s<sub>t+1</sub> of a factored [2] planning problem using Densely Connected Neural Networks [3] from data, and (ii) compiles multiple copies of the learned transition function T'(...T'(T'(T'(I,a<sub>0</sub>),a<sub>1</sub>),a<sub>2</sub>)...) = G (as visualized by Figure 1) into MILP and solves it using off-the-shelf MILP solver [4]. HD-MILP-Plan can handle discrete/continuous action spaces and continuous state spaces, arbitrarily complex state transition functions, linear constraints on actions/states and linear reward functions.
+Hybrid Deep MILP Planner (HD-MILP-Plan) is a two-stage planner based on the learning and planning framework [1] that (i) learns the state transition function T(s<sub>t</sub>,a<sub>t</sub>) = s<sub>t+1</sub> of a factored [2] planning problem using Densely Connected Neural Networks [3] from data, and (ii) compiles multiple copies of the learned transition function T'(...T'(T'(T'(I,a<sub>0</sub>),a<sub>1</sub>),a<sub>2</sub>)...) = G (as visualized by Figure 1) into MILP and solves it using off-the-shelf MILP solver [4]. HD-MILP-Plan can handle discrete/continuous action and state spaces, arbitrarily complex state transition functions, linear constraints on actions/states and linear reward functions.
 
 ![alt text](./hdmilpplan.png)
 Figure 1: Visualization of the learning and planning framework presented in [1] where red circles represent action variables, blue circles represent state variables, gray circles represent the activation units and w's represent the weights of the neural network.
@@ -9,9 +9,13 @@ Figure 1: Visualization of the learning and planning framework presented in [1] 
 
 HD-MILP-Plan
 
-i) includes parsers for domain files that read in linear expressions of form: sum<sub>1..i..n</sub> x<sub>i</sub> ? k where ? can be <=, >= or ==. See translation folder for more details.
+i) includes parsers for domain files that read in linear expressions of form: sum<sub>1..i..n</sub> a<sub>i</sub> x<sub>i</sub> ? k where ? can be <=, >= or == and a<sub>i</sub> is a constant real number. See translation folder for more details.
 
 ii) handles goal (state) constraints. 
+
+iii) can make use of known transition functions. See example transition files under translation folder for more details. HD-MILP-Plan will be prompted to encode known transition functions only when a strict subset of states are predicted by the DNNs.
+
+iv) can handle discrete state variables with a) boolean domains that are learned with step function, and b) integer domains that are learned with linear function. For b), the prediction value is rounded to the nearest integer during optimization.
 
 ## Dependencies
 
@@ -39,22 +43,32 @@ HD-MILP-Plan is re-written with some minor implementation differences from the o
 
 i) the current implementation is in Python as opposed to the original implementation that was in C++.
 
-ii) the ability to handle goal constraints (as mentioned above).
+ii) ability to handle discrete state variables (as mentioned above).
 
-iii) not connected to the RDDL simulator [5] (to connect to the RDDL simulator, you simply need to feed the first executed actions at time 0 to the rddlclient.c via console, and reduce the horizon by 1 at each iteration of the planning loop).
+iii) the ability to handle goal constraints (as mentioned above).
 
-iv) the number of parallel threads is set to 1 as opposed to 32.
+iv) the ability to handle known transition functions (as mentioned above).
 
-v) no total time limit is set for planning.
+v) not connected to the RDDL simulator [5] (to connect to the RDDL simulator, you simply need to feed the first executed actions at time 0 to the rddlclient.c via console, and reduce the horizon by 1 at each iteration of the planning loop).
 
-vi) total time limit for preprocessing is set to a constant value (i.e. 50 seconds). Allocating more time can significantly improve your planning performance especially for DNNs with more than 1 layers.
+vi) the number of parallel threads is set to 1 as opposed to 32.
+
+vii) no total time limit is set for planning.
+
+viii) total time limit for preprocessing is set to a deterministic constant value (i.e. 30,000 ticks). Allocating more time can significantly improve your planning performance especially for DNNs with more than 1 hidden layers.
+
+## Summary
+
+| Action Space | State Space  | DNN Type | Global Constraints  | Reward Optimization | Known Transition Functions | Optimality Guarantee w.r.t. DNN
+| :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+| Discrete and Continuous | Discrete and Continuous | Densely-connected DNNs with ReLU activation units | Yes, Piecewise Linear | Yes, Piecewise Linear | Yes, Piecewise Linear | Yes |
 
 ## Citation
 
 If you are using HD-MILP-Plan, please cite the paper [1].
 
 ## References
-[1] Buser Say, Ga Wu, Yu Qing Zhou, and Scott Sanner. [Nonlinear hybrid planning with deep net learned transition models and mixed-integer linear programming](http://static.ijcai.org/proceedings-2017/0104.pdf). In 26th IJCAI, pages 750–756, 2017.
+[1] Buser Say, Ga Wu, Yu Qing Zhou, and Scott Sanner. [Nonlinear hybrid planning with deep net learned transition models and mixed-integer linear programming](https://www.ijcai.org/proceedings/2017/0104.pdf). In 26th IJCAI, pages 750–756, 2017.
 
 [2] Craig Boutilier, Thomas Dean, and Steve Hanks. Decision-theoretic planning: Structural assumptions and computational leverage. JAIR, 11(1):1–94, 1999.
 
